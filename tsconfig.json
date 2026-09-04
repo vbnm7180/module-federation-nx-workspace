@@ -2,6 +2,9 @@
   "extends": "./tsconfig.base.json",
   "compileOnSave": false,
   "files": [],
-  "references": [],
+  "references": [
+    { "path": "./apps/react-app" },
+    { "path": "./apps/angular-app" }
+  ],
   "compilerOptions": {}
 }
