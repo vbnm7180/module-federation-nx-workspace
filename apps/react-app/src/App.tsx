@@ -1,8 +1,54 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { RemoteHandle } from 'remote/mount'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
 import './App.css'
+
+/** Mounts the Angular remote (`remote/mount`) into a host element. */
+function AngularRemoteSection() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    let handle: RemoteHandle | null = null
+
+    import('remote/mount')
+      .then(async (mod) => {
+        if (cancelled || !containerRef.current) return
+        handle = await mod.mount(containerRef.current)
+        if (cancelled) {
+          handle.destroy()
+          handle = null
+          return
+        }
+        setStatus('ready')
+      })
+      .catch((err) => {
+        if (cancelled) return
+        setStatus('error')
+        setError(err instanceof Error ? err.message : String(err))
+      })
+
+    return () => {
+      cancelled = true
+      handle?.destroy()
+    }
+  }, [])
+
+  return (
+    <section id="angular-remote">
+      <h2>Angular remote (Module Federation)</h2>
+      {status === 'loading' && <p>Loading Angular remote...</p>}
+      {status === 'error' && (
+        <p role="alert">Failed to load Angular remote: {error}</p>
+      )}
+      <div ref={containerRef} />
+    </section>
+  )
+}
 
 function App() {
   const [count, setCount] = useState(0)
@@ -28,6 +74,8 @@ function App() {
           Count is {count}
         </button>
       </section>
+
+      <AngularRemoteSection />
 
       <div className="ticks"></div>
 
